@@ -1,0 +1,27 @@
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - 11434:11434
+    healthcheck:
+      test: ollama --version || exit 1
+    volumes:
+      - ./ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    restart: unless-stopped
+    entrypoint: >
+      sh -c "
+      /bin/ollama serve & 
+      sleep 5 && 
+      /bin/ollama pull llama3.2:3b && 
+      wait
+      "
+  app:
+    depends_on:
+      - ollama
+    build: ./node/
+    environment:
+      - DISCORD_BOT_TOKEN=secret
+      - OLLAMA_MODEL=llama3.2:3b
+    restart: unless-stopped
